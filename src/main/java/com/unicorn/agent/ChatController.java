@@ -1,8 +1,13 @@
 package com.unicorn.agent;
 
+import javax.sql.DataSource;
+
 import org.springframework.ai.chat.client.ChatClient;
 import org.springframework.ai.chat.client.advisor.MessageChatMemoryAdvisor;
+import org.springframework.ai.chat.memory.ChatMemory;
 import org.springframework.ai.chat.memory.MessageWindowChatMemory;
+import org.springframework.ai.chat.memory.repository.jdbc.JdbcChatMemoryRepository;
+import org.springframework.ai.chat.memory.repository.jdbc.PostgresChatMemoryRepositoryDialect;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -21,8 +26,14 @@ public class ChatController {
 
 	private final ChatClient chatClient;
 
-	public ChatController (ChatClient.Builder chatClient){
-		var chatMemory = MessageWindowChatMemory.builder()
+    public ChatController (ChatClient.Builder chatClient, DataSource dataSource){
+		var chatMemoryRepository = JdbcChatMemoryRepository.builder()
+			.dataSource(dataSource)
+			.dialect(new PostgresChatMemoryRepositoryDialect())
+			.build();
+        
+        var chatMemory = MessageWindowChatMemory.builder()
+            .chatMemoryRepository(chatMemoryRepository)
 			.maxMessages(20)
 			.build();
         
@@ -40,7 +51,9 @@ public class ChatController {
 
     @PostMapping("/chat/stream")
 	public Flux<String> chatStream(@RequestBody PromptRequest promptRequest){
-		return chatClient.prompt().user(promptRequest.prompt()).stream().content();
+		var conversationId = "user1"; 
+        return chatClient.prompt().user(promptRequest.prompt())
+        .advisors(advisor -> advisor.param(ChatMemory.CONVERSATION_ID, conversationId)).stream().content();
 	}
 
     record PromptRequest(String prompt) {
