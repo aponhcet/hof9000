@@ -48,7 +48,10 @@ public class ChatController {
             .defaultAdvisors(
                 MessageChatMemoryAdvisor.builder(chatMemory).build(),
                 QuestionAnswerAdvisor.builder(vectorStore).build())
-			.build();
+			.defaultTools(
+                new DateTimeTools(),
+                new WeatherTools())
+            .build();
 	}
 
 	@PostMapping("load")
