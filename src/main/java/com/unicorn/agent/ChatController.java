@@ -17,6 +17,7 @@ import org.springframework.web.bind.annotation.RestController;
 import org.springframework.ai.document.Document;
 import java.util.List;
 import reactor.core.publisher.Flux;
+import org.springframework.ai.tool.ToolCallbackProvider;
 
 @RestController
 @RequestMapping("api")
@@ -30,7 +31,7 @@ public class ChatController {
 	private final ChatClient chatClient;
     private final VectorStore vectorStore;
 
-    public ChatController (ChatClient.Builder chatClient, DataSource dataSource, VectorStore vectorStore){
+    public ChatController (ChatClient.Builder chatClient, DataSource dataSource, VectorStore vectorStore, ToolCallbackProvider tools){
 		var chatMemoryRepository = JdbcChatMemoryRepository.builder()
 			.dataSource(dataSource)
 			.dialect(new PostgresChatMemoryRepositoryDialect())
@@ -51,6 +52,7 @@ public class ChatController {
 			.defaultTools(
                 new DateTimeTools(),
                 new WeatherTools())
+            .defaultToolCallbacks(tools)
             .build();
 	}
 
