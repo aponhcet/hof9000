@@ -1,6 +1,8 @@
 package com.unicorn.agent;
 
 import org.springframework.ai.chat.client.ChatClient;
+import org.springframework.ai.chat.client.advisor.MessageChatMemoryAdvisor;
+import org.springframework.ai.chat.memory.MessageWindowChatMemory;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -20,8 +22,13 @@ public class ChatController {
 	private final ChatClient chatClient;
 
 	public ChatController (ChatClient.Builder chatClient){
-		this.chatClient = chatClient
+		var chatMemory = MessageWindowChatMemory.builder()
+			.maxMessages(20)
+			.build();
+        
+        this.chatClient = chatClient
 			.defaultSystem(DEFAULT_SYSTEM_PROMPT)
+            .defaultAdvisors(MessageChatMemoryAdvisor.builder(chatMemory).build())
 			.build();
 	}
 
